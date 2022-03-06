@@ -1,38 +1,24 @@
+ThisBuild / scalaVersion := "2.12.8"
+ThisBuild / organization := "org.demuinck"
 
-lazy val settings =
-  commonSettings ++ scalafmtSettings
+val flinkV = "1.13.0"
 
-lazy val compilerOptions = Seq(
-  "-encoding",
-  "utf8",
-  "-unchecked",
-  "-deprecation"
-)
 
-lazy val commonSettings = Seq(scalacOptions ++= compilerOptions)
-
-lazy val scalafmtSettings =
-  Seq(
-    scalafmtOnCompile := true,
-    scalafmtTestOnCompile := true,
-    scalafmtVersion := "1.2.0"
+lazy val common = (project in file("."))
+  .settings(
+    name := "SnowplowAggregate",
+    libraryDependencies ++= Seq(
+      "org.apache.flink"           %% "flink-clients"                 % flinkV,
+      "org.apache.flink"           %% "flink-scala"                   % flinkV,
+      "org.apache.flink"           %% "flink-streaming-scala"         % flinkV,
+      "org.apache.flink"           %% "flink-connector-kafka"         % flinkV,
+      "org.apache.flink"           %% "flink-test-utils"              % flinkV % "test",
+      "org.apache.flink"           %% "flink-runtime"                 % flinkV % "test" classifier "tests",
+      "org.apache.flink"           %% "flink-streaming-java"          % flinkV % "test" classifier "tests",
+      "org.apache.flink"           %% "flink-connector-kinesis"       % flinkV,
+      "org.scalatest"              %% "scalatest"                     % "3.2.7" % Test,
+      "com.amazonaws"              % "aws-kinesisanalytics-runtime"   % "1.2.0",
+      "com.snowplowanalytics"      %% "snowplow-scala-analytics-sdk"  % "2.1.0",
+      "com.typesafe.scala-logging" %% "scala-logging"                 % "3.9.4"
+    )
   )
-
-lazy val assemblySettings = Seq(
-  assembly / assemblyMergeStrategy := {
-    case PathList("META-INF", xs @ _*) => MergeStrategy.discard
-    case "application.conf"            => MergeStrategy.concat
-    case _                             => MergeStrategy.first
-  },
-  // exclude Scala library from assembly
-  assembly / assemblyOption := (assembly / assemblyOption).value
-    .copy(includeScala = true),
-  assembly / test := {}
-)
-
-// make run command include the provided dependencies
-Compile / run := Defaults
-  .runTask(Compile / fullClasspath, Compile / run / mainClass, Compile / run / runner)
-  .evaluated
-
-Global / cancelable := true
