@@ -64,7 +64,7 @@ class SnowplowFlinkAggregatorTest extends AnyFunSuite with BeforeAndAfter with M
         .toTsv
     )
 
-    SnowplowFlinkAggregator.reduce(testStream).addSink(new CollectSink)
+    SnowplowFlinkAggregator.reduce(testStream, List("app_id", "dvce_type")).addSink(new CollectSink)
 
     env.execute()
 
