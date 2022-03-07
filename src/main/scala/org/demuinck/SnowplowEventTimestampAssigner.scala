@@ -3,8 +3,8 @@ package org.demuinck
 import org.apache.flink.api.common.eventtime.SerializableTimestampAssigner
 
 
-class SnowplowEventTimestampAssigner extends SerializableTimestampAssigner[PageViewsAggregate] {
-  override def extractTimestamp(element: PageViewsAggregate, recordTimestamp: Long): Long = {
+class SnowplowEventTimestampAssigner extends SerializableTimestampAssigner[SnowplowAggregate] {
+  override def extractTimestamp(element: SnowplowAggregate, recordTimestamp: Long): Long = {
     element.eventTs
   }
 }

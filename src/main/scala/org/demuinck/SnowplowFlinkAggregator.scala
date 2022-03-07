@@ -12,17 +12,21 @@ import java.time.Duration
 
 object SnowplowFlinkAggregator extends StrictLogging{
 
-  def reduce(dataStream: DataStream[PageViewsAggregate]): DataStream[PageViewsAggregate] = {
-    val strategy: WatermarkStrategy[PageViewsAggregate] = WatermarkStrategy
-      .forBoundedOutOfOrderness[PageViewsAggregate](Duration.ofSeconds(5))
+  def reduce(dataStream: DataStream[String]): DataStream[SnowplowAggregate] = {
+    val strategy: WatermarkStrategy[SnowplowAggregate] = WatermarkStrategy
+      .forBoundedOutOfOrderness[SnowplowAggregate](Duration.ofSeconds(5))
       .withTimestampAssigner(new SnowplowEventTimestampAssigner)
 
+    val snowplowKeySelector = new SnowplowKeySelector
+
     dataStream
+      .map(event => SnowplowAggregate(event, List("app_id", "dvce_type")))
       .assignTimestampsAndWatermarks(strategy)
-      .keyBy(new PageViewsAggregateKeySelector)
+      .keyBy(snowplowKeySelector)
       .window(TumblingEventTimeWindows.of(Time.seconds(5)))
-      .reduce((v1, v2) => new PageViewsAggregate(new VisitorKey(v1.key.appId, v1.key.referrerUrlPath, v1.key.deviceType), v1.pageViews + v2.pageViews, v1.eventTs))
+      .reduce((v1, v2) => new SnowplowAggregate(v1.dimensions, v1.count + v2.count, v1.eventTs))
   }
+
 
 
 }

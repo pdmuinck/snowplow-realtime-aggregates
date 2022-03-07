@@ -1,17 +1,19 @@
 package org.demuinck
 
-import org.apache.flink.api.common.eventtime.WatermarkStrategy
+import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer, SelfDescribingData}
+import com.snowplowanalytics.snowplow.analytics.scalasdk.Event
+import com.snowplowanalytics.snowplow.analytics.scalasdk.SnowplowEvent.Contexts
+import io.circe.parser
 import org.apache.flink.api.scala.createTypeInformation
 import org.apache.flink.runtime.testutils.MiniClusterResourceConfiguration
-import org.apache.flink.streaming.api.scala.{ StreamExecutionEnvironment}
-import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows
-import org.apache.flink.streaming.api.windowing.time.Time
+import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
 import org.apache.flink.test.util.MiniClusterWithClientResource
-import org.scalatest.{BeforeAndAfter}
+import org.scalatest.BeforeAndAfter
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
-import java.time.{Duration, Instant}
+import java.time.Instant
+import java.util.UUID
 
 
 class SnowplowFlinkAggregatorTest extends AnyFunSuite with BeforeAndAfter with Matchers{
@@ -39,11 +41,27 @@ class SnowplowFlinkAggregatorTest extends AnyFunSuite with BeforeAndAfter with M
 
     CollectSink.values.clear()
 
-    val now = Instant.now().getEpochSecond
+    val now = Instant.now()
+
+    val validUuid = "6ed5cc14-6bad-4964-889b-efa9e51906d1"
 
     val testStream = env.fromElements(
-      new PageViewsAggregate(new VisitorKey("hello", "ref", "device"), 2, now),
-      new PageViewsAggregate(new VisitorKey("hello", "ref", "device"), 3, now)
+      Event
+        .minimal(UUID.fromString(validUuid), Instant.now(), "Collector", "ETL")
+        .copy(
+          app_id = Option("org.pdemuinck.web"),
+          dvce_type = Option("smartphone"),
+          collector_tstamp = now
+        )
+        .toTsv,
+      Event
+        .minimal(UUID.fromString(validUuid), Instant.now(), "Collector", "ETL")
+        .copy(
+          app_id = Option("org.pdemuinck.web"),
+          dvce_type = Option("smartphone"),
+          collector_tstamp = now
+        )
+        .toTsv
     )
 
     SnowplowFlinkAggregator.reduce(testStream).addSink(new CollectSink)
@@ -51,7 +69,6 @@ class SnowplowFlinkAggregatorTest extends AnyFunSuite with BeforeAndAfter with M
     env.execute()
 
     CollectSink.values.size() should equal(1)
-    CollectSink.values.get(0).pageViews should equal(5)
-    CollectSink.values.get(0).key.appId should equal("hello")
+    CollectSink.values.get(0).count should equal(2)
   }
 }

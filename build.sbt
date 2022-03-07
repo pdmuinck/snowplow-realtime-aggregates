@@ -1,10 +1,10 @@
-ThisBuild / scalaVersion := "2.12.8"
+ThisBuild / scalaVersion := "2.12.10"
 ThisBuild / organization := "org.demuinck"
 
 val flinkV = "1.13.0"
 
 
-lazy val common = (project in file("."))
+lazy val root = (project in file("."))
   .settings(
     name := "SnowplowAggregate",
     libraryDependencies ++= Seq(
