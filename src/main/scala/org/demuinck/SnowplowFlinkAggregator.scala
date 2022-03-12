@@ -30,6 +30,6 @@ case class SnowplowFlinkAggregator() {
         v1.key,
         v1.count + v2.count,
         Math.min(v1.minTimestamp, v2.minTimestamp),
-        Math.max(v1.maxTimeStamp, v2.maxTimeStamp)))
+        Math.max(v1.maxTimestamp, v2.maxTimestamp)))
   }
 }
