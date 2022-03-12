@@ -72,7 +72,7 @@ class SnowplowFlinkAggregatorTest extends AnyFunSuite with BeforeAndAfter with M
 
     val aggregator = SnowplowFlinkAggregator()
 
-    aggregator.aggregate(testStream, List("app_id", "dvce_type"), 60).addSink(new CollectSink)
+    aggregator.aggregate(testStream, List("app_id", "dvce_type"), List(), 60).addSink(new CollectSink)
 
     env.execute()
 

@@ -6,4 +6,5 @@ trait SnowplowAggregate {
   val count: Long
   val minTimestamp: Long
   val maxTimestamp: Long
+  val eventTypes: List[String]
 }
