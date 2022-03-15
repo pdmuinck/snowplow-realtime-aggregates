@@ -50,16 +50,14 @@ class SnowplowFlinkAggregatorTest extends AnyFunSuite with BeforeAndAfter with M
           app_id = Option("org.pdemuinck.web"),
           dvce_type = Option("smartphone"),
           collector_tstamp = now
-        )
-        .toTsv,
+        ),
       Event
         .minimal(UUID.fromString(validUuid), Instant.now(), "Collector", "ETL")
         .copy(
           app_id = Option("org.pdemuinck.web"),
           dvce_type = Option("smartphone"),
           collector_tstamp = now
-        )
-        .toTsv,
+        ),
       Event
       .minimal(UUID.fromString(validUuid), Instant.now(), "Collector", "ETL")
       .copy(
@@ -67,12 +65,14 @@ class SnowplowFlinkAggregatorTest extends AnyFunSuite with BeforeAndAfter with M
         dvce_type = Option("smartphone"),
         collector_tstamp = now.minusSeconds(20000000)
       )
-      .toTsv
     )
 
-    val aggregator = SnowplowFlinkAggregator()
+    val aggregator = SnowplowFlinkAggregator(
+      testStream,
+      List(SnowplowCustomAggregate(List("app_id"), 60))
+    )
 
-    aggregator.aggregate(testStream, List("app_id", "dvce_type"), List(), 60).addSink(new CollectSink)
+    aggregator.aggregate().addSink(new CollectSink)
 
     env.execute()
 

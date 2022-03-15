@@ -4,9 +4,9 @@ import org.apache.flink.streaming.api.functions.sink.SinkFunction
 
 import java.util
 
-class CollectSink extends SinkFunction[SnowplowCustomAggregate] {
+class CollectSink extends SinkFunction[SnowplowCustomAggregateResult] {
 
-  override def invoke(value: SnowplowCustomAggregate): Unit = {
+  override def invoke(value: SnowplowCustomAggregateResult): Unit = {
     synchronized {
       CollectSink.values.add(value)
     }
@@ -14,5 +14,5 @@ class CollectSink extends SinkFunction[SnowplowCustomAggregate] {
 }
 
 object CollectSink {
-  val values: util.List[SnowplowCustomAggregate] = new util.ArrayList()
+  val values: util.List[SnowplowCustomAggregateResult] = new util.ArrayList()
 }

@@ -2,40 +2,31 @@ package org.demuinck
 
 import org.apache.flink.api.common.eventtime.WatermarkStrategy
 import org.apache.flink.api.scala.createTypeInformation
-import org.apache.flink.streaming.api.scala.DataStream
+import org.apache.flink.streaming.api.scala.{DataStream, OutputTag}
 import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows
 import org.apache.flink.streaming.api.windowing.time.Time
 import com.snowplowanalytics.snowplow.analytics.scalasdk.Event
+import org.demuinck.utils.AggregatorUtils
 
-import java.time.{Duration}
+import java.time.Duration
 
-case class SnowplowFlinkAggregator() {
+class GroupingSet(val groups: List[Group])
 
-  def aggregate(dataStream: DataStream[String], dimensions: List[String], eventTypes: List[String], timeWindowSeconds: Int): DataStream[SnowplowCustomAggregate] = {
-    dataStream
-      .map(event => Event.parse(event).toOption)
-      .filter(event => event match {
-        case Some(x) => true
-        case _ => false
-      })
-      .map(event => event.get)
-      .assignTimestampsAndWatermarks(WatermarkStrategy
-        .forBoundedOutOfOrderness[Event](Duration.ofSeconds(timeWindowSeconds))
-        .withTimestampAssigner(new SnowplowEventTimestampAssigner))
-      .map(event => SnowplowCustomAggregate(event, dimensions, eventTypes))
-      .filter(agg => agg match {
-        case Some(x) => true
-        case _ => false
-      })
-      .map(agg => agg.get)
-      .keyBy(agg => agg.key)
-      .window(TumblingEventTimeWindows.of(Time.seconds(timeWindowSeconds)))
-      .reduce((v1, v2) => new SnowplowCustomAggregate(
-        v1.dimensions,
-        v1.key,
-        v1.count + v2.count,
-        Math.min(v1.minTimestamp, v2.minTimestamp),
-        Math.max(v1.maxTimestamp, v2.maxTimestamp),
-        v1.eventTypes))
+class Group(val fields: List[String], val timeWindowSeconds: Long)
+
+case class SnowplowFlinkAggregator(dataStream: DataStream[Event], aggregates: List[SnowplowCustomAggregate]) {
+
+  def aggregate(): DataStream[SnowplowCustomAggregateResult] = {
+    aggregates.map(agg => {
+      val outputTag = OutputTag[SnowplowCustomAggregateResult]("side-output")
+      dataStream
+        .assignTimestampsAndWatermarks(WatermarkStrategy
+          .forBoundedOutOfOrderness[Event](Duration.ofSeconds(agg.timeWindowSeconds))
+          .withTimestampAssigner(new SnowplowEventTimestampAssigner))
+        .keyBy(ev => AggregatorUtils.getKey(ev, agg.dimensions))
+        .window(TumblingEventTimeWindows.of(Time.seconds(agg.timeWindowSeconds)))
+        .process(new SnowplowEventProcessWindowFunction(outputTag, agg.dimensions, List()))
+        .getSideOutput(outputTag)
+    }).reduceLeft(_.union(_))
   }
 }
