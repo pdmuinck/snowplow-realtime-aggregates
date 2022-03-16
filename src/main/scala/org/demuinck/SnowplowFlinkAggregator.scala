@@ -14,18 +14,19 @@ class GroupingSet(val groups: List[Group])
 
 class Group(val fields: List[String], val timeWindowSeconds: Long)
 
-case class SnowplowFlinkAggregator(dataStream: DataStream[Event], aggregates: List[SnowplowCustomAggregate]) {
+case class SnowplowFlinkAggregator(dataStream: DataStream[Event], aggregates: List[SnowplowAggregate]) {
 
   def aggregate(): DataStream[SnowplowCustomAggregateResult] = {
     aggregates.map(agg => {
       val outputTag = OutputTag[SnowplowCustomAggregateResult]("side-output")
       dataStream
+        .filter(event => AggregatorUtils.isFilteredEvent(event, agg.filters))
         .assignTimestampsAndWatermarks(WatermarkStrategy
           .forBoundedOutOfOrderness[Event](Duration.ofSeconds(agg.timeWindowSeconds))
           .withTimestampAssigner(new SnowplowEventTimestampAssigner))
         .keyBy(ev => AggregatorUtils.getKey(ev, agg.dimensions))
         .window(TumblingEventTimeWindows.of(Time.seconds(agg.timeWindowSeconds)))
-        .process(new SnowplowEventProcessWindowFunction(outputTag, agg.dimensions, List()))
+        .process(new SnowplowEventProcessWindowFunction(outputTag, agg))
         .getSideOutput(outputTag)
     }).reduceLeft(_.union(_))
   }

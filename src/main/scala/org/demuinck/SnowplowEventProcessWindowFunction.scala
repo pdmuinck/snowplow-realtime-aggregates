@@ -11,8 +11,9 @@ import scala.collection.mutable.ListBuffer
 
 class SnowplowEventProcessWindowFunction(
                                           val outputTag: OutputTag[SnowplowCustomAggregateResult],
-                                          dimensions: List[String],
-                                          filters: List[String]) extends ProcessWindowFunction[Event, SnowplowCustomAggregateResult, String, TimeWindow]{
+                                          val aggregate: SnowplowAggregate)
+  extends ProcessWindowFunction[Event, SnowplowCustomAggregateResult, String, TimeWindow]{
+
   override def process(
                         key: String,
                         context: Context,
@@ -25,8 +26,15 @@ class SnowplowEventProcessWindowFunction(
       collectorTimestamps.append(in.collector_tstamp.getEpochSecond)
     }
     val refElement = elements.head
-    val key = AggregatorUtils.getKey(refElement, dimensions)
-    val result = new SnowplowCustomAggregateResult(key, dimensions, count, collectorTimestamps.min, collectorTimestamps.max, filters)
+    val key = AggregatorUtils.getKey(refElement, aggregate.dimensions)
+    val result = new SnowplowCustomAggregateResult(
+      aggregate.dimensions,
+      aggregate.timeWindowSeconds,
+      aggregate.filters,
+      key,
+      count,
+      collectorTimestamps.min,
+      collectorTimestamps.max)
     context.output[SnowplowCustomAggregateResult](outputTag, result)
   }
 }

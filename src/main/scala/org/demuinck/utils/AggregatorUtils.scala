@@ -19,6 +19,12 @@ object AggregatorUtils {
     } catch {
       case _: Throwable => ""
     }
+  }
 
+  def isFilteredEvent(event: Event, filters: Option[Map[String, List[String]]]): Boolean = {
+    filters match  {
+      case Some(x)  => x.keys.forall(key =>  x(key).contains(getDimensionValue(event, key)))
+      case _ => true
+    }
   }
 }
