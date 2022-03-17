@@ -1,7 +1,23 @@
 ThisBuild / scalaVersion := "2.12.10"
-ThisBuild / organization := "org.demuinck"
+ThisBuild / organization := "io.github.pdmuinck"
+ThisBuild / name := "snowplow-flink-aggregates"
+ThisBuild / version := "0.1"
+ThisBuild / homepage := Some(url("https://github.com/pdmuinck/snowplow-realtime-aggregates"))
+ThisBuild / scmInfo := Some(ScmInfo(url("https://github.com/pdmuinck/snowplow-realtime-aggregates"), "git@github.com:pdmuinck/snowplow-realtime-aggregates.git"))
+ThisBuild / developers := List(Developer("pdmuinck", "pdmuinck", "pieterjandem@live.be", url("https://github.com/pdmuinck")))
+ThisBuild / licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0"))
+ThisBuild / publishMavenStyle := true
+ThisBuild / crossPaths := false
+
+publishTo := Some(
+  if (isSnapshot.value)
+    Opts.resolver.sonatypeSnapshots
+  else
+    Opts.resolver.sonatypeStaging
+)
 
 val flinkV = "1.13.0"
+
 
 
 lazy val root = (project in file("."))
