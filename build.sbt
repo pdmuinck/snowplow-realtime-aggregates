@@ -11,13 +11,10 @@ lazy val root = (project in file("."))
       "org.apache.flink"           %% "flink-clients"                 % flinkV,
       "org.apache.flink"           %% "flink-scala"                   % flinkV,
       "org.apache.flink"           %% "flink-streaming-scala"         % flinkV,
-      "org.apache.flink"           %% "flink-connector-kafka"         % flinkV,
       "org.apache.flink"           %% "flink-test-utils"              % flinkV % "test",
       "org.apache.flink"           %% "flink-runtime"                 % flinkV % "test" classifier "tests",
       "org.apache.flink"           %% "flink-streaming-java"          % flinkV % "test" classifier "tests",
-      "org.apache.flink"           %% "flink-connector-kinesis"       % flinkV,
       "org.scalatest"              %% "scalatest"                     % "3.2.7" % Test,
-      "com.amazonaws"              % "aws-kinesisanalytics-runtime"   % "1.2.0",
       "com.snowplowanalytics"      %% "snowplow-scala-analytics-sdk"  % "2.1.0",
       "com.typesafe.scala-logging" %% "scala-logging"                 % "3.9.4"
     )

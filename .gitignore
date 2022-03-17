@@ -1,5 +1,6 @@
-./target
-.idea
+.idea/*
+.idea/codeStyles/
 .bsp
-./project/target
-./project/project/target
+/project/target/**
+/project/project/target/**
+/target/
