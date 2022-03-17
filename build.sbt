@@ -9,21 +9,20 @@ ThisBuild / licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICEN
 ThisBuild / publishMavenStyle := true
 ThisBuild / crossPaths := false
 
-publishTo := Some(
-  if (isSnapshot.value)
-    Opts.resolver.sonatypeSnapshots
-  else
-    Opts.resolver.sonatypeStaging
-)
+ThisBuild / publishTo := {
+  val nexus = "https://s01.oss.sonatype.org/"
+  if (isSnapshot.value) Some("snapshots" at nexus + "content/repositories/snapshots")
+  else Some("releases" at nexus + "service/local/staging/deploy/maven2")
+}
+
 
 val flinkV = "1.13.0"
 
 
-
 lazy val root = (project in file("."))
   .settings(
-    name := "SnowplowAggregate",
-    libraryDependencies ++= Seq(
+    name := "snowplow-flink-aggregates",
+     libraryDependencies ++= Seq(
       "org.apache.flink"           %% "flink-clients"                 % flinkV,
       "org.apache.flink"           %% "flink-scala"                   % flinkV,
       "org.apache.flink"           %% "flink-streaming-scala"         % flinkV,

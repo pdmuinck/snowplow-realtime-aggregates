@@ -10,10 +10,6 @@ import org.demuinck.utils.AggregatorUtils
 
 import java.time.Duration
 
-class GroupingSet(val groups: List[Group])
-
-class Group(val fields: List[String], val timeWindowSeconds: Long)
-
 case class SnowplowFlinkAggregator(dataStream: DataStream[Event], aggregates: List[SnowplowAggregate]) {
 
   def aggregate(): DataStream[SnowplowCustomAggregateResult] = {
