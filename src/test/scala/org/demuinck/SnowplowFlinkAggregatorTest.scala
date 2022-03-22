@@ -3,7 +3,7 @@ package org.demuinck
 import com.snowplowanalytics.snowplow.analytics.scalasdk.Event
 import org.apache.flink.api.scala.createTypeInformation
 import org.apache.flink.runtime.testutils.MiniClusterResourceConfiguration
-import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
+import org.apache.flink.streaming.api.scala.{DataStream, StreamExecutionEnvironment}
 import org.apache.flink.test.util.MiniClusterWithClientResource
 import org.scalatest.BeforeAndAfter
 import org.scalatest.funsuite.AnyFunSuite
@@ -42,37 +42,15 @@ class SnowplowFlinkAggregatorTest extends AnyFunSuite with BeforeAndAfter with M
     val now = Instant.now()
 
     val validUuid = "6ed5cc14-6bad-4964-889b-efa9e51906d1"
-
-    val testStream = env.fromElements(
-      Event
-        .minimal(UUID.fromString(validUuid), Instant.now(), "Collector", "ETL")
-        .copy(
-          app_id = Option("org.pdemuinck.web"),
-          dvce_type = Option("smartphone"),
-          collector_tstamp = now
-        ),
-      Event
-        .minimal(UUID.fromString(validUuid), Instant.now(), "Collector", "ETL")
-        .copy(
-          app_id = Option("org.pdemuinck.web"),
-          dvce_type = Option("smartphone"),
-          collector_tstamp = now
-        ),
-      Event
+    val events = (1 to 10000).toList.map(x => Event
       .minimal(UUID.fromString(validUuid), Instant.now(), "Collector", "ETL")
       .copy(
         app_id = Option("org.pdemuinck.web"),
         dvce_type = Option("smartphone"),
-        collector_tstamp = now.minusSeconds(20000000)
-      ),
-      Event
-        .minimal(UUID.fromString(validUuid), Instant.now(), "Collector", "ETL")
-        .copy(
-          app_id = Option("org.pdemuinck.app"),
-          dvce_type = Option("smartphone"),
-          collector_tstamp = now.minusSeconds(20000000)
-        )
-    )
+        collector_tstamp = now
+      ))
+
+    val testStream = env.fromCollection(events)
 
     val aggregator = SnowplowFlinkAggregator(
       testStream,
@@ -83,9 +61,9 @@ class SnowplowFlinkAggregatorTest extends AnyFunSuite with BeforeAndAfter with M
 
     env.execute()
 
-    CollectSink.values should have size 2
-    CollectSink.values.map(x => x.count) should contain (1L)
-    CollectSink.values.map(x => x.count) should contain (2L)
+    CollectSink.values should have size 1
+    CollectSink.values.map(x => x.count) should contain (10000L)
+    //CollectSink.values.map(x => x.count) should contain (2L)
 
   }
 }
